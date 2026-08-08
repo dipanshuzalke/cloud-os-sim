@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OsRouteImport } from './routes/os'
+import { Route as OsIndexRouteImport } from './routes/os.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,38 @@ const OsRoute = OsRouteImport.update({
   path: '/os',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OsIndexRoute = OsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => OsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/os': typeof OsRoute
+  '/os': typeof OsRouteWithChildren
+  '/os/': typeof OsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/os': typeof OsRoute
+  '/os': typeof OsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/os': typeof OsRoute
+  '/os': typeof OsRouteWithChildren
+  '/os/': typeof OsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/os'
+  fullPaths: '/' | '/os' | '/os/'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/os'
-  id: '__root__' | '/' | '/os'
+  id: '__root__' | '/' | '/os' | '/os/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  OsRoute: typeof OsRoute
+  OsRoute: typeof OsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +73,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/os/': {
+      id: '/os/'
+      path: '/'
+      fullPath: '/os/'
+      preLoaderRoute: typeof OsIndexRouteImport
+      parentRoute: typeof OsRoute
+    }
   }
 }
 
+interface OsRouteChildren {
+  OsIndexRoute: typeof OsIndexRoute
+}
+
+const OsRouteChildren: OsRouteChildren = {
+  OsIndexRoute: OsIndexRoute,
+}
+
+const OsRouteWithChildren = OsRoute._addFileChildren(OsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  OsRoute: OsRoute,
+  OsRoute: OsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
