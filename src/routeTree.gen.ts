@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OsRouteImport } from './routes/os'
 import { Route as OsIndexRouteImport } from './routes/os.index'
+import { Route as OsVmsRouteImport } from './routes/os.vms'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,28 +29,36 @@ const OsIndexRoute = OsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => OsRoute,
 } as any)
+const OsVmsRoute = OsVmsRouteImport.update({
+  id: '/vms',
+  path: '/vms',
+  getParentRoute: () => OsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/os': typeof OsRouteWithChildren
+  '/os/vms': typeof OsVmsRoute
   '/os/': typeof OsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/os/vms': typeof OsVmsRoute
   '/os': typeof OsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/os': typeof OsRouteWithChildren
+  '/os/vms': typeof OsVmsRoute
   '/os/': typeof OsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/os' | '/os/'
+  fullPaths: '/' | '/os' | '/os/vms' | '/os/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/os'
-  id: '__root__' | '/' | '/os' | '/os/'
+  to: '/' | '/os/vms' | '/os'
+  id: '__root__' | '/' | '/os' | '/os/vms' | '/os/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -80,14 +89,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OsIndexRouteImport
       parentRoute: typeof OsRoute
     }
+    '/os/vms': {
+      id: '/os/vms'
+      path: '/vms'
+      fullPath: '/os/vms'
+      preLoaderRoute: typeof OsVmsRouteImport
+      parentRoute: typeof OsRoute
+    }
   }
 }
 
 interface OsRouteChildren {
+  OsVmsRoute: typeof OsVmsRoute
   OsIndexRoute: typeof OsIndexRoute
 }
 
 const OsRouteChildren: OsRouteChildren = {
+  OsVmsRoute: OsVmsRoute,
   OsIndexRoute: OsIndexRoute,
 }
 
