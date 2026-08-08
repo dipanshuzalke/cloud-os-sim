@@ -10,33 +10,120 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OsRouteImport } from './routes/os'
+import { Route as OsIndexRouteImport } from './routes/os.index'
+import { Route as OsAnalyticsRouteImport } from './routes/os.analytics'
+import { Route as OsSchedulerRouteImport } from './routes/os.scheduler'
+import { Route as OsSettingsRouteImport } from './routes/os.settings'
+import { Route as OsTasksRouteImport } from './routes/os.tasks'
+import { Route as OsVmsRouteImport } from './routes/os.vms'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OsRoute = OsRouteImport.update({
+  id: '/os',
+  path: '/os',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OsIndexRoute = OsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => OsRoute,
+} as any)
+const OsAnalyticsRoute = OsAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => OsRoute,
+} as any)
+const OsSchedulerRoute = OsSchedulerRouteImport.update({
+  id: '/scheduler',
+  path: '/scheduler',
+  getParentRoute: () => OsRoute,
+} as any)
+const OsSettingsRoute = OsSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => OsRoute,
+} as any)
+const OsTasksRoute = OsTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => OsRoute,
+} as any)
+const OsVmsRoute = OsVmsRouteImport.update({
+  id: '/vms',
+  path: '/vms',
+  getParentRoute: () => OsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/os': typeof OsRouteWithChildren
+  '/os/analytics': typeof OsAnalyticsRoute
+  '/os/scheduler': typeof OsSchedulerRoute
+  '/os/settings': typeof OsSettingsRoute
+  '/os/tasks': typeof OsTasksRoute
+  '/os/vms': typeof OsVmsRoute
+  '/os/': typeof OsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/os/analytics': typeof OsAnalyticsRoute
+  '/os/scheduler': typeof OsSchedulerRoute
+  '/os/settings': typeof OsSettingsRoute
+  '/os/tasks': typeof OsTasksRoute
+  '/os/vms': typeof OsVmsRoute
+  '/os': typeof OsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/os': typeof OsRouteWithChildren
+  '/os/analytics': typeof OsAnalyticsRoute
+  '/os/scheduler': typeof OsSchedulerRoute
+  '/os/settings': typeof OsSettingsRoute
+  '/os/tasks': typeof OsTasksRoute
+  '/os/vms': typeof OsVmsRoute
+  '/os/': typeof OsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/os'
+    | '/os/analytics'
+    | '/os/scheduler'
+    | '/os/settings'
+    | '/os/tasks'
+    | '/os/vms'
+    | '/os/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/os/analytics'
+    | '/os/scheduler'
+    | '/os/settings'
+    | '/os/tasks'
+    | '/os/vms'
+    | '/os'
+  id:
+    | '__root__'
+    | '/'
+    | '/os'
+    | '/os/analytics'
+    | '/os/scheduler'
+    | '/os/settings'
+    | '/os/tasks'
+    | '/os/vms'
+    | '/os/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  OsRoute: typeof OsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +135,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/os': {
+      id: '/os'
+      path: '/os'
+      fullPath: '/os'
+      preLoaderRoute: typeof OsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/os/': {
+      id: '/os/'
+      path: '/'
+      fullPath: '/os/'
+      preLoaderRoute: typeof OsIndexRouteImport
+      parentRoute: typeof OsRoute
+    }
+    '/os/analytics': {
+      id: '/os/analytics'
+      path: '/analytics'
+      fullPath: '/os/analytics'
+      preLoaderRoute: typeof OsAnalyticsRouteImport
+      parentRoute: typeof OsRoute
+    }
+    '/os/scheduler': {
+      id: '/os/scheduler'
+      path: '/scheduler'
+      fullPath: '/os/scheduler'
+      preLoaderRoute: typeof OsSchedulerRouteImport
+      parentRoute: typeof OsRoute
+    }
+    '/os/settings': {
+      id: '/os/settings'
+      path: '/settings'
+      fullPath: '/os/settings'
+      preLoaderRoute: typeof OsSettingsRouteImport
+      parentRoute: typeof OsRoute
+    }
+    '/os/tasks': {
+      id: '/os/tasks'
+      path: '/tasks'
+      fullPath: '/os/tasks'
+      preLoaderRoute: typeof OsTasksRouteImport
+      parentRoute: typeof OsRoute
+    }
+    '/os/vms': {
+      id: '/os/vms'
+      path: '/vms'
+      fullPath: '/os/vms'
+      preLoaderRoute: typeof OsVmsRouteImport
+      parentRoute: typeof OsRoute
+    }
   }
 }
 
+interface OsRouteChildren {
+  OsAnalyticsRoute: typeof OsAnalyticsRoute
+  OsSchedulerRoute: typeof OsSchedulerRoute
+  OsSettingsRoute: typeof OsSettingsRoute
+  OsTasksRoute: typeof OsTasksRoute
+  OsVmsRoute: typeof OsVmsRoute
+  OsIndexRoute: typeof OsIndexRoute
+}
+
+const OsRouteChildren: OsRouteChildren = {
+  OsAnalyticsRoute: OsAnalyticsRoute,
+  OsSchedulerRoute: OsSchedulerRoute,
+  OsSettingsRoute: OsSettingsRoute,
+  OsTasksRoute: OsTasksRoute,
+  OsVmsRoute: OsVmsRoute,
+  OsIndexRoute: OsIndexRoute,
+}
+
+const OsRouteWithChildren = OsRoute._addFileChildren(OsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  OsRoute: OsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
