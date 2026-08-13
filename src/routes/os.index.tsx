@@ -22,8 +22,13 @@ import {
   UsageAreaChart,
   WeeklyBarChart,
 } from "@/components/cloud/charts";
-import { activity, virtualMachines } from "@/features/cloud/data";
+import { activity } from "@/features/cloud/data";
 import { VMCard } from "@/components/cloud/vm-card";
+import { CreateTaskDialog, CreateVMDialog } from "@/components/cloud/create-dialogs";
+import { BackendErrorState, GlassSkeletonGrid } from "@/components/cloud/states";
+import { useTasks, useVMs } from "@/features/cloud/hooks";
+import { toVirtualMachine } from "@/features/cloud/adapters";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/os/")({
   head: () => ({
@@ -40,23 +45,6 @@ export const Route = createFileRoute("/os/")({
   component: DashboardPage,
 });
 
-const kpis = [
-  { icon: Server, label: "Running VMs", value: 12, suffix: "", hint: "5 regions" },
-  { icon: Cpu, label: "CPU", value: 58, suffix: "%", hint: "fleet average" },
-  { icon: MemoryStick, label: "Memory", value: 41, suffix: "%", hint: "of 384 GB" },
-  { icon: Activity, label: "Tasks", value: 17, suffix: "", hint: "9 queued" },
-  { icon: HardDrive, label: "Storage", value: 620, suffix: " GB", hint: "provisioned" },
-  { icon: Network, label: "Network", value: 125, suffix: " Mbps", hint: "egress now" },
-];
-
-const quickActions = [
-  { icon: Plus, label: "Create VM" },
-  { icon: Timer, label: "Create Task" },
-  { icon: Scale, label: "Open Scheduler" },
-  { icon: BarChart3, label: "Analytics" },
-  { icon: Rocket, label: "Deploy Workload" },
-];
-
 const activityIcon = {
   scale: Scale,
   task: Activity,
@@ -66,12 +54,56 @@ const activityIcon = {
 };
 
 function DashboardPage() {
+  const vmsQuery = useVMs();
+  const tasksQuery = useTasks();
+  const vms = vmsQuery.data ?? [];
+  const tasks = tasksQuery.data ?? [];
+  const loading = vmsQuery.isPending || tasksQuery.isPending;
+  const failed = vmsQuery.isError && tasksQuery.isError;
+
+  const running = vms.filter((v) => v.status === "running");
+  const totalCpu = vms.reduce((a, v) => a + v.cpu, 0);
+  const totalRam = vms.reduce((a, v) => a + v.ram, 0);
+  const totalStorage = vms.reduce((a, v) => a + v.storage, 0);
+  const queued = tasks.filter((t) => t.status === "queued").length;
+  const containerised = vms.filter((v) => v.container_id).length;
+
+  const kpis = [
+    { icon: Server, label: "Running VMs", value: running.length, suffix: "", hint: `${vms.length} provisioned` },
+    { icon: Cpu, label: "vCPU allocated", value: totalCpu, suffix: "", hint: "across the fleet" },
+    { icon: MemoryStick, label: "Memory", value: Math.round(totalRam / 1024), suffix: " GB", hint: `${totalRam} MB allocated` },
+    { icon: Activity, label: "Tasks", value: tasks.length, suffix: "", hint: `${queued} queued` },
+    { icon: HardDrive, label: "Storage", value: totalStorage, suffix: " GB", hint: "requested" },
+    { icon: Network, label: "Containers", value: containerised, suffix: "", hint: "backed by Docker" },
+  ];
+
+  const quickActions = [
+    { icon: Plus, label: "Create VM", kind: "vm" as const },
+    { icon: Timer, label: "Create Task", kind: "task" as const },
+    { icon: Scale, label: "Open Scheduler", kind: "link" as const, to: "/os/scheduler" },
+    { icon: BarChart3, label: "Analytics", kind: "link" as const, to: "/os/analytics" },
+    { icon: Rocket, label: "Machines", kind: "link" as const, to: "/os/vms" },
+  ];
+
+  const actionClass =
+    "glass-panel lift flex w-full items-center gap-3 rounded-[22px] px-5 py-5 text-left text-[15px] font-medium";
+
   return (
     <div className="space-y-10">
       <PageHeader
         title="Cloud Infrastructure Overview"
         subtitle="Monitor infrastructure, workloads and resource utilization."
       />
+
+      {failed && (
+        <BackendErrorState
+          onRetry={() => {
+            vmsQuery.refetch();
+            tasksQuery.refetch();
+          }}
+          retrying={vmsQuery.isFetching || tasksQuery.isFetching}
+        />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {kpis.map((k, i) => (
@@ -82,7 +114,11 @@ function DashboardPage() {
                 <span className="text-[12px] text-muted-foreground">{k.hint}</span>
               </div>
               <div className="mt-6 text-[2.25rem] leading-none font-semibold tracking-tight">
-                <Counter value={k.value} suffix={k.suffix} />
+                {loading ? (
+                  <span className="inline-block h-8 w-20 animate-pulse rounded-full bg-muted align-middle" />
+                ) : (
+                  <Counter value={k.value} suffix={k.suffix} />
+                )}
               </div>
               <div className="mt-2 text-[14px] text-muted-foreground">{k.label}</div>
             </div>
@@ -119,28 +155,49 @@ function DashboardPage() {
 
       <section className="space-y-4">
         <h2 className="text-[20px] font-semibold">Live infrastructure</h2>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {virtualMachines.slice(0, 6).map((vm, i) => (
-            <Reveal key={vm.id} delay={i * 0.05}>
-              <VMCard vm={vm} />
-            </Reveal>
-          ))}
-        </div>
+        {vmsQuery.isPending ? (
+          <GlassSkeletonGrid count={3} />
+        ) : vms.length === 0 ? (
+          <div className="glass-panel rounded-[26px] px-8 py-12 text-center text-[14.5px] text-muted-foreground">
+            No machines provisioned yet.
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {vms.slice(0, 6).map((vm, i) => (
+              <Reveal key={vm.id} delay={i * 0.05}>
+                <VMCard vm={toVirtualMachine(vm)} storageLabel={`${vm.storage} GB`} />
+              </Reveal>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="space-y-4">
         <h2 className="text-[20px] font-semibold">Quick actions</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          {quickActions.map((a, i) => (
-            <Reveal key={a.label} delay={i * 0.05}>
-              <button className="glass-panel lift flex w-full items-center gap-3 rounded-[22px] px-5 py-5 text-left text-[15px] font-medium">
+          {quickActions.map((a, i) => {
+            const inner = (
+              <>
                 <span className="flex size-10 items-center justify-center rounded-2xl bg-primary-soft">
                   <a.icon className="size-4.5 text-primary" />
                 </span>
                 {a.label}
-              </button>
-            </Reveal>
-          ))}
+              </>
+            );
+            return (
+              <Reveal key={a.label} delay={i * 0.05}>
+                {a.kind === "vm" ? (
+                  <CreateVMDialog trigger={<button className={actionClass}>{inner}</button>} />
+                ) : a.kind === "task" ? (
+                  <CreateTaskDialog trigger={<button className={actionClass}>{inner}</button>} />
+                ) : (
+                  <Link to={a.to} className={actionClass}>
+                    {inner}
+                  </Link>
+                )}
+              </Reveal>
+            );
+          })}
         </div>
       </section>
 
