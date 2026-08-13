@@ -29,8 +29,32 @@ function Meter({ label, value, delay }: { label: string; value: number; delay: n
   );
 }
 
-export function VMCard({ vm, actions = false }: { vm: VirtualMachine; actions?: boolean }) {
+export function VMCard({
+  vm,
+  actions = false,
+  storageLabel,
+  pendingAction,
+  onStart,
+  onStop,
+  onRestart,
+  onDelete,
+}: {
+  vm: VirtualMachine;
+  actions?: boolean;
+  storageLabel?: string;
+  pendingAction?: "start" | "stop" | "restart" | "delete" | null;
+  onStart?: () => void;
+  onStop?: () => void;
+  onRestart?: () => void;
+  onDelete?: () => void;
+}) {
   const s = statusStyles[vm.status];
+  const busy = Boolean(pendingAction);
+  const handlers: Record<string, (() => void) | undefined> = {
+    Start: onStart,
+    Stop: onStop,
+    Restart: onRestart,
+  };
   return (
     <div className="glass-panel lift h-full rounded-[26px] p-6">
       <div className="flex items-start justify-between gap-3">
@@ -65,7 +89,7 @@ export function VMCard({ vm, actions = false }: { vm: VirtualMachine; actions?: 
           <Wifi className="size-3.5" /> {vm.ip}
         </span>
         <span className="inline-flex items-center gap-2">
-          <HardDrive className="size-3.5" /> {vm.storage * 8} GB
+          <HardDrive className="size-3.5" /> {storageLabel ?? `${vm.storage * 8} GB`}
         </span>
       </div>
 
@@ -74,13 +98,19 @@ export function VMCard({ vm, actions = false }: { vm: VirtualMachine; actions?: 
           {["Start", "Stop", "Restart"].map((b) => (
             <button
               key={b}
-              className="rounded-full border border-glass-border px-4 py-2 text-[13px] font-medium transition-colors hover:bg-muted"
+              onClick={handlers[b]}
+              disabled={busy}
+              className="rounded-full border border-glass-border px-4 py-2 text-[13px] font-medium transition-colors hover:bg-muted disabled:opacity-50"
             >
-              {b}
+              {pendingAction === b.toLowerCase() ? `${b}ing…` : b}
             </button>
           ))}
-          <button className="rounded-full px-4 py-2 text-[13px] font-medium text-destructive transition-colors hover:bg-destructive/10">
-            Delete
+          <button
+            onClick={onDelete}
+            disabled={busy}
+            className="rounded-full px-4 py-2 text-[13px] font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
+          >
+            {pendingAction === "delete" ? "Deleting…" : "Delete"}
           </button>
         </div>
       )}
