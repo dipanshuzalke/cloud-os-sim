@@ -41,12 +41,12 @@ export function VMCard({
 }: {
   vm: VirtualMachine;
   actions?: boolean;
-  storageLabel?: string;
-  pendingAction?: "start" | "stop" | "restart" | "delete" | null;
-  onStart?: () => void;
-  onStop?: () => void;
-  onRestart?: () => void;
-  onDelete?: () => void;
+  storageLabel?: string | undefined;
+  pendingAction?: "start" | "stop" | "restart" | "delete" | null | undefined;
+  onStart?: (() => void) | undefined;
+  onStop?: (() => void) | undefined;
+  onRestart?: (() => void) | undefined;
+  onDelete?: (() => void) | undefined;
 }) {
   const s = statusStyles[vm.status];
   const busy = Boolean(pendingAction);

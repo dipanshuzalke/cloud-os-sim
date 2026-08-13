@@ -40,7 +40,7 @@ export function BackendErrorState({
 }: {
   onRetry: () => void;
   retrying?: boolean;
-  message?: string;
+  message?: string | undefined;
 }) {
   return (
     <motion.div
@@ -75,7 +75,7 @@ export function EmptyState({
 }: {
   title: string;
   subtitle: string;
-  action?: React.ReactNode;
+  action?: React.ReactNode | undefined;
 }) {
   return (
     <div className="glass-panel flex flex-col items-center rounded-[26px] px-8 py-16 text-center">
