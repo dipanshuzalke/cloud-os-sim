@@ -4,11 +4,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import tasks, vms
+from app.api.routes import metrics, tasks, vms
 from app.core.config import settings
 from app.core.database import Base, engine
+from app.core.realtime import socket_app
 from app.models import Task, User, VM, Workspace  # noqa: F401 - register metadata
-from app.services import docker_service
+from app.services import docker_service, monitor_service
 
 logging.basicConfig(level=logging.INFO)
 
@@ -16,7 +17,11 @@ logging.basicConfig(level=logging.INFO)
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     Base.metadata.create_all(bind=engine)
-    yield
+    monitor_service.start()
+    try:
+        yield
+    finally:
+        await monitor_service.stop()
 
 
 app = FastAPI(
@@ -37,6 +42,10 @@ app.add_middleware(
 
 app.include_router(vms.router)
 app.include_router(tasks.router)
+app.include_router(metrics.router)
+
+# Socket.IO endpoint for live `docker stats` streaming (Phase 4)
+app.mount("/socket.io", socket_app)
 
 
 @app.get("/api/health", tags=["system"])
@@ -45,4 +54,5 @@ def health():
         "status": "ok",
         "docker": docker_service.docker_available(),
         "image": settings.vm_base_image,
+        "realtime": "socket.io",
     }

@@ -132,3 +132,79 @@ export function AlgorithmRadarChart({ height = 280 }: { height?: number }) {
     </ResponsiveContainer>
   );
 }
+/** Phase 4 — live variants fed by the Socket.IO metrics stream. */
+export interface LiveChartPoint {
+  t: string;
+  cpu: number;
+  mem: number;
+  rx: number;
+  tx: number;
+}
+
+export function LiveUsageAreaChart({
+  data,
+  height = 240,
+}: {
+  data: LiveChartPoint[];
+  height?: number;
+}) {
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <AreaChart data={data} margin={{ left: -20, right: 8, top: 8 }}>
+        <defs>
+          <linearGradient id="gCpuLive" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.35} />
+            <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
+          </linearGradient>
+          <linearGradient id="gMemLive" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--chart-2)" stopOpacity={0.3} />
+            <stop offset="100%" stopColor="var(--chart-2)" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 6" stroke="var(--border)" vertical={false} />
+        <XAxis dataKey="t" {...axis} minTickGap={40} />
+        <YAxis {...axis} width={44} domain={[0, 100]} unit="%" />
+        <Tooltip {...tooltipStyle} />
+        <Area
+          type="monotone"
+          dataKey="cpu"
+          name="CPU %"
+          stroke="var(--chart-1)"
+          strokeWidth={2}
+          fill="url(#gCpuLive)"
+          isAnimationActive={false}
+        />
+        <Area
+          type="monotone"
+          dataKey="mem"
+          name="Memory %"
+          stroke="var(--chart-2)"
+          strokeWidth={2}
+          fill="url(#gMemLive)"
+          isAnimationActive={false}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+export function LiveNetworkLineChart({
+  data,
+  height = 240,
+}: {
+  data: LiveChartPoint[];
+  height?: number;
+}) {
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <LineChart data={data} margin={{ left: -20, right: 8, top: 8 }}>
+        <CartesianGrid strokeDasharray="3 6" stroke="var(--border)" vertical={false} />
+        <XAxis dataKey="t" {...axis} minTickGap={40} />
+        <YAxis {...axis} width={48} unit=" KB/s" />
+        <Tooltip {...tooltipStyle} />
+        <Line type="monotone" dataKey="rx" name="Inbound" stroke="var(--chart-3)" strokeWidth={2.2} dot={false} isAnimationActive={false} />
+        <Line type="monotone" dataKey="tx" name="Outbound" stroke="var(--chart-4)" strokeWidth={2.2} dot={false} isAnimationActive={false} />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
