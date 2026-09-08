@@ -207,3 +207,69 @@ def get_container_stats(container_id: str) -> dict[str, Any]:
         except Exception as exc:  # noqa: BLE001
             logger.warning("stats: %s", exc)
     return result
+
+
+def _cpu_percent(s: dict[str, Any]) -> float:
+    try:
+        cpu = s["cpu_stats"]
+        pre = s["precpu_stats"]
+        cpu_delta = cpu["cpu_usage"]["total_usage"] - pre["cpu_usage"]["total_usage"]
+        sys_delta = (cpu.get("system_cpu_usage") or 0) - (pre.get("system_cpu_usage") or 0)
+        online = cpu.get("online_cpus") or len(cpu["cpu_usage"].get("percpu_usage") or [1]) or 1
+        if sys_delta > 0 and cpu_delta > 0:
+            return round((cpu_delta / sys_delta) * online * 100, 2)
+    except Exception:  # noqa: BLE001
+        pass
+    return 0.0
+
+
+_MB = 1024 * 1024
+
+
+def read_stats(container_id: str) -> dict[str, Any] | None:
+    """One `docker stats` sample: CPU, memory, network and block IO.
+
+    Returns None when the container is gone or not running.
+    """
+    try:
+        c = get_container(container_id)
+        c.reload()
+        if c.status != "running":
+            return None
+        s = c.stats(stream=False)
+    except DockerUnavailable:
+        return None
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("read_stats(%s): %s", container_id, exc)
+        return None
+
+    mem = s.get("memory_stats", {}) or {}
+    usage = mem.get("usage", 0) - (mem.get("stats", {}) or {}).get("cache", 0)
+    limit = mem.get("limit", 0) or 0
+
+    rx = tx = 0
+    for iface in (s.get("networks") or {}).values():
+        rx += iface.get("rx_bytes", 0)
+        tx += iface.get("tx_bytes", 0)
+
+    read_b = write_b = 0
+    for entry in ((s.get("blkio_stats") or {}).get("io_service_bytes_recursive") or []):
+        op = str(entry.get("op", "")).lower()
+        if op == "read":
+            read_b += entry.get("value", 0)
+        elif op == "write":
+            write_b += entry.get("value", 0)
+
+    usage_mb = round(max(usage, 0) / _MB, 2)
+    limit_mb = round(limit / _MB, 2)
+    return {
+        "container_id": container_id,
+        "cpu_percent": _cpu_percent(s),
+        "memory_usage_mb": usage_mb,
+        "memory_limit_mb": limit_mb,
+        "memory_percent": round((usage_mb / limit_mb) * 100, 2) if limit_mb else 0.0,
+        "network_rx_mb": round(rx / _MB, 3),
+        "network_tx_mb": round(tx / _MB, 3),
+        "block_read_mb": round(read_b / _MB, 3),
+        "block_write_mb": round(write_b / _MB, 3),
+    }
