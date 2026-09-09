@@ -61,8 +61,14 @@ function AnalyticsPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Reveal className="lg:col-span-2">
           <div className="glass-panel rounded-[26px] p-7">
-            <div className="text-[15px] font-semibold">CPU & memory over 24 hours</div>
-            <UsageAreaChart height={280} />
+            <div className="text-[15px] font-semibold">
+              {hasLive ? "CPU & memory · live" : "CPU & memory over 24 hours"}
+            </div>
+            {hasLive ? (
+              <LiveUsageAreaChart data={live.history} height={280} />
+            ) : (
+              <UsageAreaChart height={280} />
+            )}
           </div>
         </Reveal>
         <Reveal delay={0.06}>
