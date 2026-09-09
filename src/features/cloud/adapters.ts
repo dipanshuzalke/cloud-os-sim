@@ -43,3 +43,16 @@ export function toVirtualMachine(vm: ApiVM): VirtualMachine {
 }
 
 export const storageLabel = (vm: ApiVM) => `${vm.storage} GB`;
+
+/** Phase 4 — overlay live `docker stats` numbers on the card view model. */
+export function withLiveSample(
+  vm: VirtualMachine,
+  sample?: { cpu_percent: number; memory_percent: number },
+): VirtualMachine {
+  if (!sample || vm.status === "stopped") return vm;
+  return {
+    ...vm,
+    cpu: Math.max(0, Math.min(100, Math.round(sample.cpu_percent))),
+    ram: Math.max(0, Math.min(100, Math.round(sample.memory_percent))),
+  };
+}

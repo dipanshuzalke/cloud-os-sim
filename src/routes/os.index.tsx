@@ -96,10 +96,13 @@ function DashboardPage() {
 
   return (
     <div className="space-y-10">
-      <PageHeader
-        title="Cloud Infrastructure Overview"
-        subtitle="Monitor infrastructure, workloads and resource utilization."
-      />
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <PageHeader
+          title="Cloud Infrastructure Overview"
+          subtitle="Monitor infrastructure, workloads and resource utilization."
+        />
+        <LiveIndicator connected={live.connected} />
+      </div>
 
       {failed && (
         <BackendErrorState
@@ -136,7 +139,11 @@ function DashboardPage() {
         <Reveal className="lg:col-span-2">
           <div className="glass-panel rounded-[26px] p-6">
             <div className="text-[15px] font-semibold">CPU & memory utilisation</div>
-            <UsageAreaChart height={250} />
+            {hasLive ? (
+              <LiveUsageAreaChart data={live.history} height={250} />
+            ) : (
+              <UsageAreaChart height={250} />
+            )}
           </div>
         </Reveal>
         <Reveal delay={0.06}>
@@ -154,7 +161,11 @@ function DashboardPage() {
         <Reveal delay={0.14} className="lg:col-span-2">
           <div className="glass-panel rounded-[26px] p-6">
             <div className="text-[15px] font-semibold">Network throughput</div>
-            <NetworkLineChart height={210} />
+            {hasLive ? (
+              <LiveNetworkLineChart data={live.history} height={210} />
+            ) : (
+              <NetworkLineChart height={210} />
+            )}
           </div>
         </Reveal>
       </div>
