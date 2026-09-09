@@ -3,11 +3,15 @@ import { PageHeader } from "@/components/os/shell";
 import { Counter, Reveal } from "@/components/motion/reveal";
 import {
   AlgorithmRadarChart,
+  LiveNetworkLineChart,
+  LiveUsageAreaChart,
   NetworkLineChart,
   TaskDonutChart,
   UsageAreaChart,
   WeeklyBarChart,
 } from "@/components/cloud/charts";
+import { LiveIndicator } from "@/components/cloud/live-indicator";
+import { useLiveMetrics } from "@/features/cloud/live";
 
 export const Route = createFileRoute("/os/analytics")({
   head: () => ({
@@ -29,12 +33,17 @@ const summary = [
 ];
 
 function AnalyticsPage() {
+  const live = useLiveMetrics();
+  const hasLive = live.history.length > 1;
   return (
     <div className="space-y-9">
-      <PageHeader
-        title="Performance Analytics"
-        subtitle="How the fleet behaves over time, and how each scheduling policy compares."
-      />
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <PageHeader
+          title="Performance Analytics"
+          subtitle="How the fleet behaves over time, and how each scheduling policy compares."
+        />
+        <LiveIndicator connected={live.connected} />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summary.map((s, i) => (
@@ -52,14 +61,24 @@ function AnalyticsPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Reveal className="lg:col-span-2">
           <div className="glass-panel rounded-[26px] p-7">
-            <div className="text-[15px] font-semibold">CPU & memory over 24 hours</div>
-            <UsageAreaChart height={280} />
+            <div className="text-[15px] font-semibold">
+              {hasLive ? "CPU & memory · live" : "CPU & memory over 24 hours"}
+            </div>
+            {hasLive ? (
+              <LiveUsageAreaChart data={live.history} height={280} />
+            ) : (
+              <UsageAreaChart height={280} />
+            )}
           </div>
         </Reveal>
         <Reveal delay={0.06}>
           <div className="glass-panel rounded-[26px] p-7">
             <div className="text-[15px] font-semibold">Network throughput</div>
-            <NetworkLineChart height={240} />
+            {hasLive ? (
+              <LiveNetworkLineChart data={live.history} height={240} />
+            ) : (
+              <NetworkLineChart height={240} />
+            )}
           </div>
         </Reveal>
         <Reveal delay={0.1}>

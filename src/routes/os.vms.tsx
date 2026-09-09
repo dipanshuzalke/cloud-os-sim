@@ -7,7 +7,9 @@ import { VMCard } from "@/components/cloud/vm-card";
 import { CreateVMDialog } from "@/components/cloud/create-dialogs";
 import { BackendErrorState, EmptyState, GlassSkeletonGrid } from "@/components/cloud/states";
 import { useDeleteVM, useVMLifecycle, useVMs } from "@/features/cloud/hooks";
-import { toVirtualMachine } from "@/features/cloud/adapters";
+import { toVirtualMachine, withLiveSample } from "@/features/cloud/adapters";
+import { useLiveMetrics } from "@/features/cloud/live";
+import { LiveIndicator } from "@/components/cloud/live-indicator";
 
 export const Route = createFileRoute("/os/vms")({
   head: () => ({
@@ -25,6 +27,7 @@ function VMsPage() {
   const { data: vms, isPending, isError, error, refetch, isFetching } = useVMs();
   const lifecycle = useVMLifecycle();
   const remove = useDeleteVM();
+  const live = useLiveMetrics();
 
   const pendingFor = (id: string): "start" | "stop" | "restart" | "delete" | null => {
     if (remove.isPending && remove.variables === id) return "delete";
@@ -39,13 +42,16 @@ function VMsPage() {
           title="Virtual Machines"
           subtitle="Live Docker-backed nodes with real capacity limits and lifecycle controls."
         />
-        <CreateVMDialog
-          trigger={
-            <button className="glass-panel lift inline-flex items-center gap-2 rounded-full px-5 py-3 text-[14px] font-medium">
-              <Plus className="size-4 text-primary" /> Create VM
-            </button>
-          }
-        />
+        <div className="flex items-center gap-3">
+          <LiveIndicator connected={live.connected} />
+          <CreateVMDialog
+            trigger={
+              <button className="glass-panel lift inline-flex items-center gap-2 rounded-full px-5 py-3 text-[14px] font-medium">
+                <Plus className="size-4 text-primary" /> Create VM
+              </button>
+            }
+          />
+        </div>
       </div>
 
       {isPending ? (
@@ -68,7 +74,7 @@ function VMsPage() {
               <motion.div key={vm.id} layout exit={{ opacity: 0, scale: 0.96, filter: "blur(6px)" }}>
                 <Reveal delay={i * 0.04}>
                   <VMCard
-                    vm={toVirtualMachine(vm)}
+                    vm={withLiveSample(toVirtualMachine(vm), live.byVm[vm.id])}
                     actions
                     storageLabel={`${vm.storage} GB`}
                     pendingAction={pendingFor(vm.id)}

@@ -17,17 +17,21 @@ import {
 import { PageHeader } from "@/components/os/shell";
 import { Counter, Reveal } from "@/components/motion/reveal";
 import {
+  LiveNetworkLineChart,
+  LiveUsageAreaChart,
   NetworkLineChart,
   TaskDonutChart,
   UsageAreaChart,
   WeeklyBarChart,
 } from "@/components/cloud/charts";
+import { LiveIndicator } from "@/components/cloud/live-indicator";
+import { useLiveMetrics } from "@/features/cloud/live";
 import { activity } from "@/features/cloud/data";
 import { VMCard } from "@/components/cloud/vm-card";
 import { CreateTaskDialog, CreateVMDialog } from "@/components/cloud/create-dialogs";
 import { BackendErrorState, GlassSkeletonGrid } from "@/components/cloud/states";
 import { useTasks, useVMs } from "@/features/cloud/hooks";
-import { toVirtualMachine } from "@/features/cloud/adapters";
+import { toVirtualMachine, withLiveSample } from "@/features/cloud/adapters";
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/os/")({
@@ -54,6 +58,8 @@ const activityIcon = {
 };
 
 function DashboardPage() {
+  const live = useLiveMetrics();
+  const hasLive = live.history.length > 1;
   const vmsQuery = useVMs();
   const tasksQuery = useTasks();
   const vms = vmsQuery.data ?? [];
@@ -90,10 +96,13 @@ function DashboardPage() {
 
   return (
     <div className="space-y-10">
-      <PageHeader
-        title="Cloud Infrastructure Overview"
-        subtitle="Monitor infrastructure, workloads and resource utilization."
-      />
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <PageHeader
+          title="Cloud Infrastructure Overview"
+          subtitle="Monitor infrastructure, workloads and resource utilization."
+        />
+        <LiveIndicator connected={live.connected} />
+      </div>
 
       {failed && (
         <BackendErrorState
@@ -130,7 +139,11 @@ function DashboardPage() {
         <Reveal className="lg:col-span-2">
           <div className="glass-panel rounded-[26px] p-6">
             <div className="text-[15px] font-semibold">CPU & memory utilisation</div>
-            <UsageAreaChart height={250} />
+            {hasLive ? (
+              <LiveUsageAreaChart data={live.history} height={250} />
+            ) : (
+              <UsageAreaChart height={250} />
+            )}
           </div>
         </Reveal>
         <Reveal delay={0.06}>
@@ -148,7 +161,11 @@ function DashboardPage() {
         <Reveal delay={0.14} className="lg:col-span-2">
           <div className="glass-panel rounded-[26px] p-6">
             <div className="text-[15px] font-semibold">Network throughput</div>
-            <NetworkLineChart height={210} />
+            {hasLive ? (
+              <LiveNetworkLineChart data={live.history} height={210} />
+            ) : (
+              <NetworkLineChart height={210} />
+            )}
           </div>
         </Reveal>
       </div>
@@ -165,7 +182,10 @@ function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {vms.slice(0, 6).map((vm, i) => (
               <Reveal key={vm.id} delay={i * 0.05}>
-                <VMCard vm={toVirtualMachine(vm)} storageLabel={`${vm.storage} GB`} />
+                <VMCard
+                  vm={withLiveSample(toVirtualMachine(vm), live.byVm[vm.id])}
+                  storageLabel={`${vm.storage} GB`}
+                />
               </Reveal>
             ))}
           </div>
