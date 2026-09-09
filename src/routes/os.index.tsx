@@ -58,6 +58,8 @@ const activityIcon = {
 };
 
 function DashboardPage() {
+  const live = useLiveMetrics();
+  const hasLive = live.history.length > 1;
   const vmsQuery = useVMs();
   const tasksQuery = useTasks();
   const vms = vmsQuery.data ?? [];
