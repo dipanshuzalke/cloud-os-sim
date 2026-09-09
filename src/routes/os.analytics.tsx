@@ -3,11 +3,15 @@ import { PageHeader } from "@/components/os/shell";
 import { Counter, Reveal } from "@/components/motion/reveal";
 import {
   AlgorithmRadarChart,
+  LiveNetworkLineChart,
+  LiveUsageAreaChart,
   NetworkLineChart,
   TaskDonutChart,
   UsageAreaChart,
   WeeklyBarChart,
 } from "@/components/cloud/charts";
+import { LiveIndicator } from "@/components/cloud/live-indicator";
+import { useLiveMetrics } from "@/features/cloud/live";
 
 export const Route = createFileRoute("/os/analytics")({
   head: () => ({
