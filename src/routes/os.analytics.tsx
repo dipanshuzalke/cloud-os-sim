@@ -33,12 +33,17 @@ const summary = [
 ];
 
 function AnalyticsPage() {
+  const live = useLiveMetrics();
+  const hasLive = live.history.length > 1;
   return (
     <div className="space-y-9">
-      <PageHeader
-        title="Performance Analytics"
-        subtitle="How the fleet behaves over time, and how each scheduling policy compares."
-      />
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <PageHeader
+          title="Performance Analytics"
+          subtitle="How the fleet behaves over time, and how each scheduling policy compares."
+        />
+        <LiveIndicator connected={live.connected} />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summary.map((s, i) => (
