@@ -7,7 +7,9 @@ import { VMCard } from "@/components/cloud/vm-card";
 import { CreateVMDialog } from "@/components/cloud/create-dialogs";
 import { BackendErrorState, EmptyState, GlassSkeletonGrid } from "@/components/cloud/states";
 import { useDeleteVM, useVMLifecycle, useVMs } from "@/features/cloud/hooks";
-import { toVirtualMachine } from "@/features/cloud/adapters";
+import { toVirtualMachine, withLiveSample } from "@/features/cloud/adapters";
+import { useLiveMetrics } from "@/features/cloud/live";
+import { LiveIndicator } from "@/components/cloud/live-indicator";
 
 export const Route = createFileRoute("/os/vms")({
   head: () => ({

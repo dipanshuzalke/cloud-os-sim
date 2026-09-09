@@ -31,7 +31,7 @@ import { VMCard } from "@/components/cloud/vm-card";
 import { CreateTaskDialog, CreateVMDialog } from "@/components/cloud/create-dialogs";
 import { BackendErrorState, GlassSkeletonGrid } from "@/components/cloud/states";
 import { useTasks, useVMs } from "@/features/cloud/hooks";
-import { toVirtualMachine } from "@/features/cloud/adapters";
+import { toVirtualMachine, withLiveSample } from "@/features/cloud/adapters";
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/os/")({
@@ -182,7 +182,10 @@ function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {vms.slice(0, 6).map((vm, i) => (
               <Reveal key={vm.id} delay={i * 0.05}>
-                <VMCard vm={toVirtualMachine(vm)} storageLabel={`${vm.storage} GB`} />
+                <VMCard
+                  vm={withLiveSample(toVirtualMachine(vm), live.byVm[vm.id])}
+                  storageLabel={`${vm.storage} GB`}
+                />
               </Reveal>
             ))}
           </div>
