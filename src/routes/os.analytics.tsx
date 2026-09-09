@@ -74,7 +74,11 @@ function AnalyticsPage() {
         <Reveal delay={0.06}>
           <div className="glass-panel rounded-[26px] p-7">
             <div className="text-[15px] font-semibold">Network throughput</div>
-            <NetworkLineChart height={240} />
+            {hasLive ? (
+              <LiveNetworkLineChart data={live.history} height={240} />
+            ) : (
+              <NetworkLineChart height={240} />
+            )}
           </div>
         </Reveal>
         <Reveal delay={0.1}>
