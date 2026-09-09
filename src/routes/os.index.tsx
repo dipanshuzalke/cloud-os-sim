@@ -17,11 +17,15 @@ import {
 import { PageHeader } from "@/components/os/shell";
 import { Counter, Reveal } from "@/components/motion/reveal";
 import {
+  LiveNetworkLineChart,
+  LiveUsageAreaChart,
   NetworkLineChart,
   TaskDonutChart,
   UsageAreaChart,
   WeeklyBarChart,
 } from "@/components/cloud/charts";
+import { LiveIndicator } from "@/components/cloud/live-indicator";
+import { useLiveMetrics } from "@/features/cloud/live";
 import { activity } from "@/features/cloud/data";
 import { VMCard } from "@/components/cloud/vm-card";
 import { CreateTaskDialog, CreateVMDialog } from "@/components/cloud/create-dialogs";
